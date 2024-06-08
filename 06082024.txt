@@ -1,0 +1,205 @@
+task1: ENCOR security
+cmd
+ping 10.11.1.10
+ping 10.11.1.2
+ping 10.11.1.4
+ping 10.11.11.1
+ping 10.11.100.8
+
+cmd:
+route add 10.0.0.0 mask 255.0.0.0 10.11.1.4
+route add 200.0.0.0 mask 255.255.255.0 10.11.1.4
+
+C1sc0123
+
+task1: whythe winserver:
+Cisco ENCOR needs: Certificate Authority, Active Directory/LDAP
+				Radisu/802.1x
+
+cmd
+powershell
+Set-NetfirewallProfile -name public,private,domain -enabled false
+Get-NetfirewallProfile
+ncpa.cpl
+
+rename-computer radius11
+restart-computer 
+
+https://github.com/rivancorp/encorday5am
+
+Task3: ADS for Cisco
+GlobalGroup = networkadmins
+users gb@encor11.com
+users george@encor11.com
+
+
+Task3: ENCOR LAB NA VirtualCisco
+1. CoPP
+Timbased ACL:
+3. SuperADmin
+
+RSTHayup: all else: ospf, eigrp,vrrp/hsrp,BGP
+
+
+
+en
+pass
+
+
+
+1. 0a:0c::/64 - a:c::/64
+2. ::/0
+3. fe80::0a:0:0f/64 - fe80::a:0:0f/64
+4. 2002:6500:0:3000::/64
+5. ::01/128 - ::1/128
+6. ff00:0:beef:a00a:0aa0::/8 - ff00:0:0:beef:a00a:0aa0::/8
+
+@ISP2
+conf t
+	ipv6 unicast-routing
+	int lo2
+		ipv6 add b22::1/128
+		router bgp 2
+			neigh B:1:2:B::3 remote-as 3
+			neigh B:1:22:B::1 remote-as 1
+			neigh B:2:1:B::4 remote-as 45
+			neigh B:2:4:B::5 remote-as 45
+			address-family ipv6
+				neigh B:1:2:B::3 activate
+				neigh B:1:22:B::1 activate
+				neigh B:2:1:B::4 activate
+				neigh B:2:4:B::5 activate
+				network B:1:2:B::/64
+				network B:1:22:B::/64
+				network B:2:1:B::/64
+				network B:2:4:B::/64
+				network b22::1/128
+				end
+
+
+@R1  !!!! hold here, blank sa kanila :) 
+	conf t
+		ipv6 unicast-routing
+		router bgp 1
+			neigh B:1:11:B::4 remote-as 45
+			neigh B:1:22:B::2 remote-as 2
+			neigh B:1:33:B::3 remote-as 3
+			address-family ipv6
+				neigh B:1:11:B::4 activate 
+			    neigh B:1:22:B::2 activate
+				neigh B:1:33:B::3 activate
+				network FEC0:1::/122    !loopback ni R1 v6
+				network B:1:11:B::/64
+				network B:1:22:B::/64
+				network B:1:33:B::/64
+				end
+				
+				
+				
+2001:4860:4860::8888/128 - google DNS
+
+@R3
+conf t
+		ipv6 unicast-routing
+		interface Loopback3
+			description Test I/F for OSPFv2 & OSPFv3 Routing
+			ip address 3.3.3.3 255.255.255.255
+			ipv6 address FEC0:3::3/122
+		interface Tunnel34
+			no ip address
+			ipv6 address 2026::34:1/122
+			tunnel source lo3
+			tunnel destination 4.4.4.4
+			tunnel mode ipv6ip
+		int e1/1
+			ipv6 address 2026::1:2/122
+			end
+			
+			
+@R4
+	conf t
+		ipv6 unicast-routing
+		interface Loopback4
+			description Test I/F for OSPFv2 & OSPFv3 Routing
+			ip address 4.4.4.4 255.255.255.255
+			ipv6 address FEC0::4:4/122
+		interface e1/0
+			description L3 Link to DSW1
+			ip address 10.1.4.5 255.255.255.252
+			ipv6 address 2026::2:1/122 
+		interface e1/1
+			description L3 Link to DSW2 fa0/14
+			ip address 10.1.4.9 255.255.255.252
+		interface Loopback14
+			description Test I/F for RIPng Routing
+			no ip address
+			ipv6 address FEC0::14:4/122
+		interface Loopback21
+			description Test I/F for EIGRPv4 Routing & IP(v4) Helper Loopback I/F
+			ip address 10.1.21.129 255.255.255.224
+		interface Tunnel34
+	    !creating a tunnel for the ipv6 connection of router 3 and router 4
+			no ip address
+			ipv6 address 2026::34:2/122
+			tunnel source 4.4.4.4
+			tunnel destination 3.3.3.3
+			tunnel mode ipv6ip
+			
+
+@R2
+	conf t
+		ipv6 router ospf 6
+			router-id 2.2.2.2
+		int lo2
+			ipv6 ospf 6 area 0
+		int e1/2
+			ipv6 ospf 6 area 12
+		int e1/1
+			ipv6 ospf 6 area 0
+			end
+			
+@R4
+	conf t
+		ipv6 router ospf 6
+			router-id 4.4.4.4
+		int lo4
+			ipv6 ospf 6 area 34
+		interface Tunnel34
+			ipv6 ospf 6 area 34
+			end
+
+
+
+
+@R4   !!!! Kailangan ma-fix itong OSPF pang ipv4 muna sa area34
+		show run | sec ospf !show ospf routes
+	
+	conf t
+		router ospf 1
+			network 4.4.4.4 0.0.0.0 area 34
+			network 10.1.1.8 0.0.0.3 area 34
+			end
+			
+EIGRPv6
+
+@D2
+	conf t
+		int lo1
+			ipv6 add 22:22:22:22::2/64
+		ipv6 router eigrp 10
+			eigrp router-id 2.2.2.2
+			no shut
+		int lo1
+			ipv6 eigrp 10
+		int e1/1
+			ipv6 eigrp 10
+		int vlan 10
+			ipv6 eigrp 10
+		int vlan 20
+			ipv6 eigrp 10
+		int vlan 200
+			ipv6 eigrp 10
+			end
+			
+			
+			https://github.com/ggenergg/nexus9k
